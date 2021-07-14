@@ -5,15 +5,23 @@ import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.widget.ScrollView
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.example.threadworkerandcoroutines.databinding.ActivityMainBinding
+import kotlinx.coroutines.*
+import java.net.URL
+import java.nio.charset.Charset
 import kotlin.concurrent.thread
 import kotlin.math.log
-
+val fileUrl = "https://2833069.youcanlearnit.net/lorem_ipsum.txt"
 class MainActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityMainBinding
+    private lateinit var viewModel: MainViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         setContentView(binding.root)
 
         // Initialize button click
@@ -22,9 +30,12 @@ class MainActivity : AppCompatActivity() {
                 runCode()
             }
             clearButton.setOnClickListener {
-                clearOutput()
+               viewModel.cancelJob()
             }
         }
+        viewModel.myData.observe(this, { txtData ->
+            log(txtData)
+        })
     }
 
 
@@ -32,7 +43,7 @@ class MainActivity : AppCompatActivity() {
      * Run some code
      */
     private fun runCode() {
-        // Use handler with post delay
+      /*  // Use handler with post delay
         Handler().postDelayed ({ log("Synchronous operation1")},2000 )
         Handler().postDelayed ({ log("Synchronous operation2")},1000 )
         Handler().postDelayed ({ log("Synchronous operation3")},3000 )
@@ -45,8 +56,14 @@ class MainActivity : AppCompatActivity() {
               Thread.sleep(1000)
           }
           Log.i(LOG_TAG,"completed")
-        }
+        }*/
+      /*  CoroutineScope(Dispatchers.Main).launch {
+            val result = fetchSomething()
+            log(result ?: "Failed to fetch request from server")*/
 
+       // }
+        clearOutput()
+     viewModel.doWork()
     }
 
     /**
@@ -73,5 +90,6 @@ class MainActivity : AppCompatActivity() {
     private fun scrollTextToEnd() {
         Handler().post { binding.scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
     }
+
 
 }
