@@ -44,6 +44,4 @@
         android:text="@string/clear"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/runButton"
-        app:layout_constraintTop_toTopOf="@id/runButton" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        app:layout_constraintTop_toTopOf="@id/runButton" />    </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,47 +1,78 @@
 package com.example.threadworkerandcoroutines
 
-import android.app.Activity
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.os.ResultReceiver
 import android.util.Log
-import android.widget.ImageView
 import android.widget.ScrollView
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
+import androidx.appcompat.app.AppCompatActivity
+import androidx.work.*
 import com.example.threadworkerandcoroutines.databinding.ActivityMainBinding
-import kotlinx.coroutines.*
-import java.net.URL
-import java.nio.charset.Charset
-import kotlin.concurrent.thread
-import kotlin.math.log
-val fileUrl = "https://2833069.youcanlearnit.net/lorem_ipsum.txt"
+
+//val fileUrl = "https://2833069.youcanlearnit.net/lorem_ipsum.txt"
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var viewModel: MainViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
-        setContentView(binding.root)
 
+        // Initialize view binding for view object references
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // Initialize button click handlers
         with(binding) {
             runButton.setOnClickListener { runCode() }
             clearButton.setOnClickListener { clearOutput() }
         }
+
     }
+
     /**
      * Run some code
      */
     private fun runCode() {
-        val receiver = MyResultReceiver(Handler())
-        MyIntentService.startAction(this, FILE_URL, receiver)
+
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val workRequest = OneTimeWorkRequestBuilder<MyWorker>()
+            .setConstraints(constraints)
+            .build()
+
+
+        val workManager = WorkManager.getInstance(applicationContext)
+        workManager.enqueue(workRequest)
+        workManager.getWorkInfoByIdLiveData(workRequest.id)
+            .observe(this, {
+                if (it.state == WorkInfo.State.SUCCEEDED) {
+                    val result = it.outputData.getString(DATA_KEY)
+                    log(result ?: "Null")
+                }
+            })
+
+        /*val workManager = WorkManager.getInstance(applicationContext)
+        workManager.enqueue(workRequest)
+        workManager.getWorkInfoByIdLiveData(workRequest.id)
+            .observe(this, Observer {
+                when (it.state) {
+                    WorkInfo.State.SUCCEEDED -> {
+                        val result = it.outputData.getString(DATA_KEY)
+                        log(result ?: "Null")
+                    }
+                    WorkInfo.State.RUNNING -> {
+                        val progress = it.progress.getString(MESSAGE_KEY)
+                        if (progress != null) {
+                            log(progress)
+                        }
+                    }
+
+                }
+            })*/
     }
+
     /**
      * Clear log display
      */
@@ -65,15 +96,5 @@ class MainActivity : AppCompatActivity() {
      */
     private fun scrollTextToEnd() {
         Handler().post { binding.scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
-    }
-
-    private inner class MyResultReceiver(handler: Handler) :
-        ResultReceiver(handler) {
-        override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
-            if (resultCode == Activity.RESULT_OK) {
-                val fileContents = resultData?.getString(FILE_CONTENTS_KEY) ?: "Null"
-                log(fileContents)
-            }
-        }
     }
 }
